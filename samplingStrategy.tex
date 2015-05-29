@@ -1,0 +1,57 @@
+\section{Sampling strategy}
+\label{sec:samplingStrategy}
+
+We start from the premise that the sampling strategy is constrained to follow the approach in the current ARKS paper: namely, that after an initial sampling (the `training period'), every new acquisition acquires samples uniformly radially along some angle $\theta$. 
+In what follows, we are concerned with the sampling strategy for a \emph{given frame}: having identified that the current position of the heart is (almost) the same as some previously encountered position, we pull the corresponding previous frame and aim to `complete' its sampling.
+
+Fix a frame, and an initial set of angles acquired in that frame's k-space, $\{\theta_1,\ldots,\theta_M\}$, $\theta_1 = 0, \theta_n \in [0,2\pi)$.
+Our task is to formulate a sampling strategy which provides the next $N - M$ angles such that 
+\begin{enumerate}
+	\item At any time $ M+1 \leq n \leq N$, the sequence $(\theta_1,\ldots , \theta_n):= \theta^n$ is as uniformly distributed as possible on $[0,2\pi)$
+	\label{finiteuniform}
+	\item As $N \rightarrow \infty$, the empirical CDF $F_N$ of the sampled angles approaches the uniform density on $[0,2\pi)$
+	\label{asymptoticuniform}	
+	\item For any $n \geq M+1$, $|\theta_n - \theta_{n+1}|$ is as small as possible.
+	\label{mineddy}
+\end{enumerate}
+The first desideratum arises from the fact that we desire a real-time imaging capability: at any given moment, the frame $f(t)$ seen by the physician is the result of all the samplings for that frame up to that point, and so it's important that at any (discrete) time $t$, the successive acquisitions up to that point generate as uniform of a sampling as possible.
+An asymptotic convergence to a uniform distribution is not sufficient, because the data is viewed in real-time, rather than at the end of all sampling.
+
+The second desideratum is a consistency requirement: as the number of samples goes to infinity, the samples should cover the interval $[0,2\pi)$ like samples generated from a true uniform distribution. 
+\emph{Note this is different from saying that the sampling procedure itself approaches the uniform distribution.}
+I.e., we are not making statement on distribution convergence.
+
+The last desideratum aims at reducing eddy currents.
+
+Let $r(n)$ be a measure of the uniformity of $n$ points on $[0,2\pi)$. 
+We will give a concrete proposal for such a measure later.
+The objective function whose maximization captures the above desiderata is 
+\begin{equation}
+\label{eq:cost}
+J = \sum_{n=M+1}^{N}a_n\cdot r(n) - b_n \cdot (\theta_n - \theta_{n+1})^2
+\end{equation}
+where $a_n,b_n \geq 0$ are weights, and the second term is squared to have a well-behaved objective function. 
+Variations on this objective can be obtained by hard-limiting the deviation of the second summand from 0, e.g. 
+\[J = \sum_{n=M+1}^{N}a_n\cdot r(n) - b_n \cdot 1_{[-\beta,\beta]}  (\theta_n - \theta_{n+1})\]
+where $\beta > 0$ is an upper limit on the deviation between $\theta_n$ and $\theta_{n+1}$, and $1_S(x) = x$ if $x \in S$ and is infinite otherwise.
+
+The uniformity measure $r$ should be such that $r(n) = 0$ implies that the sequence $\theta^n$ is perfectly uniformly distributed.
+Then desideratum \ref{asymptoticuniform} implies that we want $r(n) \rightarrow 0$ as $n \rightarrow \infty$.
+We propose that $r(n)$ be the \emph{discrepancy} of the sequence $\theta^n$ in $[0,2\pi)$.
+The discrepancy of a sequence measures how spread are the elements of the sequence in a given bounded space.
+Formally, given a sequence $\theta^n $ of $s$-dimensional points $(\theta_1,\ldots,\theta_n)$ in the unit ($s$-dimensional) cube, its discrepancy is defined as 
+\begin{equation}
+D_n(\theta^n) := \sup_{B \in \mathcal{I}}\left|\frac{\#\textrm{points in }B}{n} - \lambda_s(B)\right|
+\end{equation}
+where $\lambda_s$ is the $s$-dimensional Lebesgue measure and $\mathcal{I}$ is the set all $s$-dimensional intervals in the unit cube, i.e., the set of all sets $K$ of the form
+\[K = \Pi_{i=1}^s [a_i,b_i)\]
+for some $0 \leq a_i < b_i \leq 1$.
+Intuitively, we want the relative number of sequence points inside a given box $B$ to be close to the volume of that box inside the unit cube. 
+Thus bigger boxes contain more points, as would be expected from a uniformly distributed sequence.
+
+Of course, in our case, $s=1$ and the points are in $[0,2\pi)$ rather than the interval $[0,1)$ so a scaling is a propos.
+
+It is known that calculating the discrepancy is not possible in most cases, but upper and lower bounds are known, and constructive methods of generating high discrepancy sequences are available.
+
+It is an interesting question to study whether the above cost \eqref{eq:cost}, at least in its first component, is amenable to dynamic programming.
+That is, given the first $n$ angles, can we maximize $r(n+2)$ by choosing $\theta_{n+1}$ to maximize $r(n+1)$ and then $\theta_{n+2}$ to maximize $r(n+2)$ \emph{given} $\theta_{n+1}$, or is optimality lost by breaking up the problem in this manner?
